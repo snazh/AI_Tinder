@@ -1,0 +1,64 @@
+# =========================
+# General
+# =========================
+.DS_Store
+Thumbs.db
+.env
+*.log
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# =========================
+# Python / FastAPI backend
+# =========================
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Poetry
+poetry.lock
+# (optional) comment above line if you want to track lock file for reproducibility
+
+# Build / cache
+.mypy_cache/
+.pytest_cache/
+coverage/
+dist/
+build/
+*.egg-info/
+instance/
+.cache/
+
+# =========================
+# Frontend (React)
+# =========================
+# Node modules
+frontend/node_modules/
+frontend/.npm/
+frontend/.yarn/
+frontend/.parcel-cache/
+
+# Build output
+frontend/build/
+frontend/dist/
+
+# React environment files
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# =========================
+# IDE / Editors
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# OS files
+# =========================
+*.swp
+*.swo
