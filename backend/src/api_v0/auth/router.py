@@ -1,21 +1,17 @@
 from fastapi import APIRouter, Request, HTTPException, Response, Depends, status
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from jose import jwt
-
-from src.api_v0.auth.utils import JWTUtil
+from src.api_v0.auth.dependencies import get_current_user, get_auth_service
+from src.api_v0.auth.service import AuthService
+from src.api_v0.auth.utils import JWTUtil, oauth
 from src.config import settings
+from src.api_v0.auth.errors import TokenError, AuthError
+from src.api_v0.users.schemas import UserAuthSchema
+from src.database.models.user import UserRole
+from src.database.db import get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-
-# OAuth
-oauth = OAuth()
-oauth.register(
-    name="google",
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_id=settings.auth.GOOGLE_CLIENT_ID,
-    client_secret=settings.auth.GOOGLE_CLIENT_SECRET,
-    client_kwargs={"scope": "email openid profile"}
-)
 
 
 # 1) Login — редирект на Google
@@ -26,52 +22,36 @@ async def login(request: Request):
 
 # 2) Auth — получает токен от Google и ставит JWT в куки
 @router.get("/", name="auth")
-async def auth(request: Request, response: Response):
+async def auth(request: Request,
+               response: Response,
+               service: AuthService = Depends(get_auth_service),
+               session: AsyncSession = Depends(get_async_session)):
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError:
-        raise HTTPException(status_code=400, detail="Invalid Google OAuth token")
+        raise TokenError("Invalid Google OAuth token")
 
     user = token.get("userinfo")
     if not user:
-        raise HTTPException(status_code=403, detail="Authentication failed")
+        raise AuthError(message="Authentication failed")
+    user_data = UserAuthSchema(sub=user["sub"], email=user["email"], role=UserRole.user)
 
-    user_data = {
-        "sub": user["sub"],
-        "email": user["email"],
-        "name": user.get("name"),
-        "picture": user.get("picture")
-    }
+    user = await service.google_auth(user_data=user_data, session=session)
 
-    access_token = JWTUtil.create_access_token(user_data)
-    refresh_token = JWTUtil.create_refresh_token(user_data)
-
+    # create tokens
+    access_token = JWTUtil.create_access_token(user_data.dict())
+    refresh_token = JWTUtil.create_refresh_token(user_data.dict())
+    # create cookies with tokens
     response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")
 
-    return {"message": "Logged in successfully", "user": user_data}
-
-
-# 3) Декодирование JWT из куки
-def get_current_user(request: Request):
-    token = request.cookies.get("access_token")
-    print(token)
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing token")
-    try:
-        payload = jwt.decode(token, settings.auth.SECRET_KEY, algorithms=[settings.auth.ALGORITHM])
-        print(payload)
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
-        return payload
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return {"message": "Logged in successfully", "user": user}
 
 
 # 4) Профиль пользователя
 @router.get("/profile")
 def profile(user: dict = Depends(get_current_user)):
-    return {"user": user}
+    return {"message": "Profile fetched", "user": user}
 
 
 # 5) Refresh токена

@@ -18,7 +18,7 @@ class BaseService[ModelType, SchemaType]:
     def _to_schema(self, instance: ModelType) -> SchemaType:
         return self.schema.model_validate(instance)
 
-    async def create(self, session: AsyncSession, item_data: BaseModel) -> SchemaType:
+    async def create(self, item_data: BaseModel, session: AsyncSession) -> SchemaType:
         new_item = self.model(**item_data.dict())
         session.add(new_item)
         await session.commit()

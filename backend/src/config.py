@@ -29,7 +29,7 @@ class DBSettings(CoreConfig):
 class AuthSettings(CoreConfig):
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
-    REDIRECT_URL: str = "http://127.0.0.1:8000/auth"
+    REDIRECT_URL: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -38,6 +38,7 @@ class AuthSettings(CoreConfig):
 
 class AdminSettings(CoreConfig):
     ADMIN_EMAIL: str
+    ADMIN_SUB:str
 
 
 class RedisSetting(CoreConfig):
@@ -53,4 +54,3 @@ class Settings(CoreConfig):
 
 
 settings = Settings()
-print(f"{settings.db.async_database_url}")
