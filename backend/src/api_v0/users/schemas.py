@@ -4,6 +4,7 @@ from src.database.models.user import UserRole
 
 
 class UserAuthSchema(BaseModel):
+
     email: EmailStr
     sub: str
     role: UserRole

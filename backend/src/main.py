@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from src.api_v0.auth.router import router as auth_router
+from src.api_v0.profile.router import router as profile_router
 from src.api_v0.common.errors import BaseAppException
 from src.config import settings
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(profile_router)
 
 
 @app.exception_handler(BaseAppException)

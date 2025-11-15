@@ -39,8 +39,14 @@ async def auth(request: Request,
     user = await service.google_auth(user_data=user_data, session=session)
 
     # create tokens
-    access_token = JWTUtil.create_access_token(user_data.dict())
-    refresh_token = JWTUtil.create_refresh_token(user_data.dict())
+    user_payload = {
+        "id": user.id,
+        "role": user.role.value,
+        "email": user.email,
+        "sub": user.sub
+    }
+    access_token = JWTUtil.create_access_token(user_payload)
+    refresh_token = JWTUtil.create_refresh_token(user_payload)
     # create cookies with tokens
     response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")

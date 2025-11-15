@@ -19,6 +19,5 @@ class AuthService(BaseService[User, UserModelSchema]):
 
         if user is None:
             user = await super().create(item_data=user_data, session=session)
-            print("CREATED USER:", user)
 
         return user

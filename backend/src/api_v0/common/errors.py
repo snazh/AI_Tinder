@@ -14,3 +14,6 @@ class ItemNotFoundError(BaseAppException):
 class ItemAlreadyExistsError(BaseAppException):
     def __init__(self, item: str, attr: str, value: str):
         super().__init__(409, f"{item} with {attr} {value} already exists")
+
+
+

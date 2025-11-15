@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
 # declaring path to .env file
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 ENV_PATH = os.path.join(ROOT_DIR, '.env')
+TMP_S3_STORAGE_PATH = os.path.join(ROOT_DIR, 'temp-storage')
 
 
 class CoreConfig(BaseSettings):
@@ -38,7 +41,7 @@ class AuthSettings(CoreConfig):
 
 class AdminSettings(CoreConfig):
     ADMIN_EMAIL: str
-    ADMIN_SUB:str
+    ADMIN_SUB: str
 
 
 class RedisSetting(CoreConfig):
@@ -46,10 +49,19 @@ class RedisSetting(CoreConfig):
     REDIS_PORT: int
 
 
+class S3BucketSettings(CoreConfig):
+    AWS_BUCKET_NAME: str
+    AWS_REGION: str
+    AWS_ACCESS_KEY: str
+    AWS_SECRET_KEY: str
+    media_storage: Path = TMP_S3_STORAGE_PATH
+
+
 class Settings(CoreConfig):
     db: DBSettings = DBSettings()
     auth: AuthSettings = AuthSettings()
     admin_data: AdminSettings = AdminSettings()
+    s3bucket: S3BucketSettings = S3BucketSettings()
     redis: RedisSetting = RedisSetting()
 
 

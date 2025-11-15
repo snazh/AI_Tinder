@@ -16,8 +16,7 @@ oauth.register(
 class JWTUtil:
     @staticmethod
     def create_access_token(data: dict):
-        # UserRole enum value extracting
-        data["role"] = data["role"].value
+
         payload = data.copy()
         payload.update({
             "exp": datetime.utcnow() + timedelta(minutes=15),
@@ -28,8 +27,7 @@ class JWTUtil:
 
     @staticmethod
     def create_refresh_token(data: dict):
-        #UserRole enum value extracting
-        data["role"] = data["role"].value
+
         payload = data.copy()
         payload.update({
             "exp": datetime.utcnow() + timedelta(days=7),
