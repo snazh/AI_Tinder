@@ -52,6 +52,9 @@ class AdminSettings(CoreConfig):
 class RedisSetting(CoreConfig):
     REDIS_HOST: str
     REDIS_PORT: int
+    REDIS_PASSWORD: str
+
+
 #
 #
 # class S3BucketSettings(CoreConfig):

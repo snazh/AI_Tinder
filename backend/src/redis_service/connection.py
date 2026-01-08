@@ -9,6 +9,6 @@ redis_client = Redis(
     port=settings.redis.REDIS_PORT,
     decode_responses=True,
     username="default",
-    password="SLwkrf91GprlSSoq3F54ZWg3tjQJotqS",
+    password=settings.redis.REDIS_PASSWORD,
 
 )
