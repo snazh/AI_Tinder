@@ -62,7 +62,7 @@ def profile(user: dict = Depends(get_current_user)):
 
 # 5) Refresh токена
 @router.post("/refresh")
-def refresh_token(request: Request, response: Response):
+def refresh(request: Request, response: Response):
     token = request.cookies.get("refresh_token")
     if not token:
         raise HTTPException(status_code=401, detail="Missing refresh token")

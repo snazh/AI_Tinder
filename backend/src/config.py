@@ -39,6 +39,11 @@ class AuthSettings(CoreConfig):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
 
+class EmailClientSettings(CoreConfig):
+    EMAIL_ADDRESS: str
+    EMAIL_PASSWORD: str
+
+
 class AdminSettings(CoreConfig):
     ADMIN_EMAIL: str
     ADMIN_SUB: str
@@ -47,21 +52,22 @@ class AdminSettings(CoreConfig):
 class RedisSetting(CoreConfig):
     REDIS_HOST: str
     REDIS_PORT: int
-
-
-class S3BucketSettings(CoreConfig):
-    AWS_BUCKET_NAME: str
-    AWS_REGION: str
-    AWS_ACCESS_KEY: str
-    AWS_SECRET_KEY: str
-    media_storage: Path = TMP_S3_STORAGE_PATH
+#
+#
+# class S3BucketSettings(CoreConfig):
+#     AWS_BUCKET_NAME: str
+#     AWS_REGION: str
+#     AWS_ACCESS_KEY: str
+#     AWS_SECRET_KEY: str
+#     media_storage: Path = TMP_S3_STORAGE_PATH
 
 
 class Settings(CoreConfig):
     db: DBSettings = DBSettings()
+    email_client: EmailClientSettings = EmailClientSettings()
     auth: AuthSettings = AuthSettings()
     admin_data: AdminSettings = AdminSettings()
-    s3bucket: S3BucketSettings = S3BucketSettings()
+    # s3bucket: S3BucketSettings = S3BucketSettings()
     redis: RedisSetting = RedisSetting()
 
 
