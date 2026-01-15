@@ -52,7 +52,11 @@ class AdminSettings(CoreConfig):
 class RedisSetting(CoreConfig):
     REDIS_HOST: str
     REDIS_PORT: int
-    REDIS_PASSWORD: str
+
+
+class CelerySetting(CoreConfig):
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
 
 
 #

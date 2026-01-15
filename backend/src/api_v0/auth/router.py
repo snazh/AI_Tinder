@@ -10,6 +10,7 @@ from src.api_v0.users.schemas import UserAuthSchema
 from src.database.models.user import UserRole
 from src.database.db import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.tasks.email_tasks import send_welcome_email
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -36,7 +37,7 @@ async def auth(request: Request,
         raise AuthError(message="Authentication failed")
     user_data = UserAuthSchema(sub=user["sub"], email=user["email"], role=UserRole.user)
 
-    user = await service.google_auth(user_data=user_data, session=session)
+    user, is_new = await service.google_auth(user_data=user_data, session=session)
 
     # create tokens
     user_payload = {
@@ -50,7 +51,8 @@ async def auth(request: Request,
     # create cookies with tokens
     response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")
-
+    if is_new:
+        send_welcome_email.delay(user.email)
     return {"message": "Logged in successfully", "user": user}
 
 

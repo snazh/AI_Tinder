@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.s3service.dependencies import get_media_service
 from src.s3service.service import MediaService, MediaSection
 
-from src.redis_service.dependencies import get_email_queue, Queue
 
 router = APIRouter(prefix="/profile", tags=["Auth"])
 
