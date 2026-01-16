@@ -59,14 +59,17 @@ class CelerySetting(CoreConfig):
     CELERY_RESULT_BACKEND: str
 
 
-#
-#
-# class S3BucketSettings(CoreConfig):
-#     AWS_BUCKET_NAME: str
-#     AWS_REGION: str
-#     AWS_ACCESS_KEY: str
-#     AWS_SECRET_KEY: str
-#     media_storage: Path = TMP_S3_STORAGE_PATH
+class S3Settings(CoreConfig):
+    S3_ACCESS_KEY: str
+    S3_SECRET_KEY: str
+    S3_ACCOUNT_ID: str
+    S3_BUCKET: str
+
+    media_storage: Path = TMP_S3_STORAGE_PATH
+
+    @property
+    def s3_endpoint(self):
+        return f"https://{self.S3_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
 
 class Settings(CoreConfig):
@@ -74,7 +77,7 @@ class Settings(CoreConfig):
     email_client: EmailClientSettings = EmailClientSettings()
     auth: AuthSettings = AuthSettings()
     admin_data: AdminSettings = AdminSettings()
-    # s3bucket: S3BucketSettings = S3BucketSettings()
+    s3: S3Settings = S3Settings()
     redis: RedisSetting = RedisSetting()
 
 

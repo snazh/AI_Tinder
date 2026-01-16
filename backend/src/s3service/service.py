@@ -1,12 +1,11 @@
 import os.path
 from enum import Enum
-from pathlib import Path
-
+from io import BytesIO
 from fastapi import UploadFile
-
 from src.s3service.bucket import S3BucketUtil
 from src.s3service.file_util.image import ImageUtil
-
+import logging
+logger = logging.getLogger(__name__)
 
 class MediaSection(Enum):
     product = "product"
@@ -19,24 +18,20 @@ class MediaService:
         self._img_util = img_util
 
     async def save_image_s3(self, uploaded_file: UploadFile, section: MediaSection) -> str:
-        file_path = await self._img_util.save_image(uploaded_file=uploaded_file)
-
-        filename = Path(file_path).name
+        content = await self._img_util.validate_image(uploaded_file)
+        filename = uploaded_file.filename
 
         key_path = f"images/{section.value}/{filename}"
 
-        await self._s3_util.upload(key_path=key_path, filename=filename)
-        await self._img_util.delete_image(file_path)
+        await self._s3_util.upload(key_path=key_path, file_obj=BytesIO(content))
+        logger.info("Image saved to S3")
         return key_path
-
-    async def get_image_s3(self, key_path: str) -> str:
-        file_path = self._s3_util.tmp_storage / Path(key_path).name
-        if await self._img_util.is_exist(file_path=file_path):
-            return str(file_path)
-
-        img_path: str = await self._s3_util.download(key_path=key_path)
-        return img_path
 
     async def get_image_link(self, key_path: str) -> str:
         return await self._s3_util.get_download_link(key_path=key_path)
 
+    logger.info("Image link fetched from S3")
+
+    async def delete_image(self, key_path: str) -> None:
+        await self._s3_util.delete_file(key_path)
+        logger.info("Image deleted from S3")

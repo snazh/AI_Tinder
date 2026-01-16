@@ -1,6 +1,6 @@
-"""Basic connection example.
-"""
+import logging
 
+logger = logging.getLogger(__name__)
 from redis.asyncio import Redis
 from src.config import settings
 
@@ -13,4 +13,5 @@ async def create_redis():
         username="default",
     )
     await redis.ping()
+    logger.info("Profile creation started")
     return redis

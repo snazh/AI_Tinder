@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api_v0.common.service import BaseService
 from src.api_v0.users.schemas import UserModelSchema, UserAuthSchema
 from src.database.models.user import User
-from src.tasks.email_tasks import send_welcome_email
 
 
 class AuthService(BaseService[User, UserModelSchema]):

@@ -11,13 +11,16 @@ from src.database.models.user import UserRole
 from src.database.db import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.tasks.email_tasks import send_welcome_email
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 # 1) Login — редирект на Google
 @router.get("/login", status_code=status.HTTP_200_OK)
 async def login(request: Request):
+    logger.info("Google OAuth login redirect started")
     return await oauth.google.authorize_redirect(request, settings.auth.REDIRECT_URL)
 
 
@@ -30,13 +33,14 @@ async def auth(request: Request,
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError:
+        logger.warning("Google OAuth token validation failed", exc_info=True)
         raise TokenError("Invalid Google OAuth token")
 
-    user = token.get("userinfo")
-    if not user:
+    userinfo = token.get("userinfo")
+    if not userinfo:
+        logger.error("Missing userinfo in Google OAuth token")
         raise AuthError(message="Authentication failed")
-    user_data = UserAuthSchema(sub=user["sub"], email=user["email"], role=UserRole.user)
-
+    user_data = UserAuthSchema(sub=userinfo["sub"], email=userinfo["email"], role=UserRole.user)
     user, is_new = await service.google_auth(user_data=user_data, session=session)
 
     # create tokens
@@ -51,14 +55,17 @@ async def auth(request: Request,
     # create cookies with tokens
     response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, samesite="lax")
+    logger.info("Authorization success", extra={"user_id": user.id})
     if is_new:
+        logger.info(f"Welcome email sent to {user.email}")
         send_welcome_email.delay(user.email)
     return {"message": "Logged in successfully", "user": user}
 
 
 # 4) Профиль пользователя
-@router.get("/profile")
-def profile(user: dict = Depends(get_current_user)):
+@router.get("/me")
+def me(user: dict = Depends(get_current_user)):
+    logger.info(f"Profile fetched", extra={"user_id": user["id"]})
     return {"message": "Profile fetched", "user": user}
 
 
@@ -67,12 +74,15 @@ def profile(user: dict = Depends(get_current_user)):
 def refresh(request: Request, response: Response):
     token = request.cookies.get("refresh_token")
     if not token:
+        logger.warning("Refresh token missing")
         raise HTTPException(status_code=401, detail="Missing refresh token")
     try:
         payload = jwt.decode(token, settings.auth.SECRET_KEY, algorithms=[settings.auth.ALGORITHM])
         if payload.get("type") != "refresh":
+            logger.warning("Invalid refresh token type")
             raise HTTPException(status_code=401, detail="Invalid token type")
     except Exception:
+        logger.warning("Invalid refresh token", exc_info=True)
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     new_access_token = JWTUtil.create_access_token({
@@ -81,7 +91,7 @@ def refresh(request: Request, response: Response):
         "name": payload.get("name"),
         "picture": payload.get("picture")
     })
-
+    logger.info(f"Access token refreshed", extra={"user_id": payload["sub"]})
     response.set_cookie(key="access_token", value=new_access_token, httponly=True, samesite="lax")
     return {"message": "Access token refreshed"}
 
@@ -91,4 +101,5 @@ def refresh(request: Request, response: Response):
 def logout(response: Response):
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
+    logger.info("User logged out")
     return {"message": "Logged out"}

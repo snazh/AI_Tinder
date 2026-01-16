@@ -1,4 +1,7 @@
 from fastapi import HTTPException, status
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAppException(HTTPException):
@@ -7,13 +10,10 @@ class BaseAppException(HTTPException):
 
 
 class ItemNotFoundError(BaseAppException):
-    def __init__(self, item: str, attr: str, value: any):
+    def __init__(self, item: str, attr: str, value):
         super().__init__(404, f"{item} with {attr} {value} not found")
 
 
 class ItemAlreadyExistsError(BaseAppException):
-    def __init__(self, item: str, attr: str, value: str):
+    def __init__(self, item: str, attr: str, value):
         super().__init__(409, f"{item} with {attr} {value} already exists")
-
-
-
