@@ -1,6 +1,6 @@
 # src/models/user.py
 from datetime import datetime
-from sqlalchemy import String, Enum
+from sqlalchemy import String, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 from enum import Enum as PyEnum
@@ -24,6 +24,3 @@ class User(Base):
 
     profile: Mapped["Profile"] = relationship(back_populates="user")
 
-#
-# class UserAnketa(Base):
-#     pass

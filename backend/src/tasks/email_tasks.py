@@ -1,7 +1,6 @@
 from .celery_app import celery_app
-import time
 
-from src.email_client.setup import send_email
+from src.services.email import send_email
 
 
 @celery_app.task

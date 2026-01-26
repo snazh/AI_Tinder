@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -9,6 +10,15 @@ class ProfileCreateSchema(BaseModel):
     user_id: int
     age: int
     description: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProfileUpdateSchema(BaseModel):
+    username: Optional[str] = None
+    avatar_path: Optional[str] = None
+    age: Optional[int] = None
+    user_id: int
+    description: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 

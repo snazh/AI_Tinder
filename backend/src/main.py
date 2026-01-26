@@ -9,18 +9,23 @@ from src.api_v0.common.errors import BaseAppException
 from src.config import settings
 from starlette.middleware.sessions import SessionMiddleware
 from src.core.logging_config import setup_logging
-from src.redis_service.connection import create_redis
-from src.tasks.email_tasks import send_welcome_email
+from src.services.redis_service.connection import create_redis
+
+from meilisearch_python_sdk import AsyncClient
+from src.services import meilisearch
 
 
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     setup_logging()
     app.state.redis = await create_redis()
-
+    meilisearch.meili_client = AsyncClient(
+        settings.meilisearch.MEILI_HTTP_ADDR,
+        settings.meilisearch.MEILI_MASTER_KEY,
+    )
     yield
     await app.state.redis.close()
-
+    await meilisearch.meili_client.aclose()
 
 app = FastAPI(title="KezdesuAI API", lifespan=lifespan)
 

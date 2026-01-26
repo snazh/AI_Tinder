@@ -70,7 +70,7 @@ class BaseService[ModelType, SchemaType]:
         result = await session.execute(stmt)
         await session.commit()
         if result.rowcount == 0:
-            raise ItemNotFoundError(item=self.model.__tablename__(), attr="id", value=item_id)
+            return False
         return True
 
     async def get_all_with_options(self, session: AsyncSession, *options) -> List[SchemaType]:

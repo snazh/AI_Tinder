@@ -59,6 +59,11 @@ class CelerySetting(CoreConfig):
     CELERY_RESULT_BACKEND: str
 
 
+class MeiliSearchSettings(CoreConfig):
+    MEILI_HTTP_ADDR: str
+    MEILI_MASTER_KEY: str
+
+
 class S3Settings(CoreConfig):
     S3_ACCESS_KEY: str
     S3_SECRET_KEY: str
@@ -79,6 +84,7 @@ class Settings(CoreConfig):
     admin_data: AdminSettings = AdminSettings()
     s3: S3Settings = S3Settings()
     redis: RedisSetting = RedisSetting()
+    meilisearch: MeiliSearchSettings = MeiliSearchSettings()
 
 
 settings = Settings()

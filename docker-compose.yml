@@ -9,6 +9,19 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
-
+  meilisearch:
+      image: getmeili/meilisearch:latest
+      ports:
+        - "7700:7700"
+      env_file:
+        - .env
+      volumes:
+        - meili_data:/meili_data
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
 volumes:
   redis_data:
+  meili_data:
