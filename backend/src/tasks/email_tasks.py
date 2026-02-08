@@ -1,6 +1,6 @@
 from .celery_app import celery_app
 
-from src.services.email import send_email
+from src.services.email_service.email import send_email
 
 
 @celery_app.task

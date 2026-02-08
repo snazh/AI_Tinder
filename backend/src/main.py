@@ -12,7 +12,7 @@ from src.core.logging_config import setup_logging
 from src.services.redis_service.connection import create_redis
 
 from meilisearch_python_sdk import AsyncClient
-from src.services import meilisearch
+from src.services.meilisearch_service import meilisearch
 
 
 @asynccontextmanager
@@ -20,9 +20,12 @@ async def lifespan(app_instance: FastAPI):
     setup_logging()
     app.state.redis = await create_redis()
     meilisearch.meili_client = AsyncClient(
-        settings.meilisearch.MEILI_HTTP_ADDR,
+        settings.meilisearch.MEILI_URL,
         settings.meilisearch.MEILI_MASTER_KEY,
     )
+    index = meilisearch.meili_client.index("profiles")
+    await index.update_searchable_attributes(["username", "description"])
+    await index.update_filterable_attributes(["age", "role"])
     yield
     await app.state.redis.close()
     await meilisearch.meili_client.aclose()

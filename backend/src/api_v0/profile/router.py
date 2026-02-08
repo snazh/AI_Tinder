@@ -2,6 +2,7 @@ import json
 from json import JSONDecodeError
 
 from fastapi import APIRouter, HTTPException, Depends, status, Form, File, UploadFile
+from meilisearch_python_sdk import AsyncClient
 
 from src.api_v0.common.errors import ItemNotFoundError
 
@@ -12,7 +13,7 @@ from src.api_v0.profile.service import ProfileService
 from src.api_v0.auth.errors import AccessForbiddenError
 from src.database.db import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from src.services.meilisearch_service.meilisearch import get_meili_client
 from src.services.s3service.dependencies import get_media_service
 from src.services.s3service.service import MediaService, MediaSection
 import logging
@@ -28,7 +29,8 @@ async def create_profile(
         user: dict = Depends(get_current_user),
         service: ProfileService = Depends(get_profile_service),
         session: AsyncSession = Depends(get_async_session),
-        media_service: MediaService = Depends(get_media_service)):
+        media_service: MediaService = Depends(get_media_service),
+        meili_service: AsyncClient = Depends(get_meili_client)):
     try:
         data_dict = json.loads(profile_data)
         if avatar.filename == "":
@@ -43,6 +45,11 @@ async def create_profile(
         profile_schema = ProfileCreateSchema(**data_dict, user_id=user_id, avatar_path=avatar_path)
 
         new_profile = await service.create(item_data=profile_schema, session=session)
+
+        # adding to meilisearch
+        document = new_profile.model_dump()
+        index = meili_service.index("profiles")
+        await index.add_documents([document])
         return {"msg": "Profile created successfully", "profile": new_profile}
     except Exception:
         logger.error(
@@ -52,8 +59,12 @@ async def create_profile(
         await media_service.delete_image(avatar_path)
         raise HTTPException(status_code=500, detail="Profile creation failed")
 
-
-@router.get("/{profile_id}")
+@router.get("/search", status_code=status.HTTP_200_OK)
+async def search_profiles(query: str, limit: int = 20, meili_service: AsyncClient = Depends(get_meili_client)):
+    index = meili_service.index("profiles")  # Убедись, что индекс создан
+    results = await index.search(query, limit=limit)
+    return results.hits
+@router.get("/{profile_id}", status_code=status.HTTP_200_OK)
 async def get_profile(profile_id: int,
                       user: dict = Depends(get_current_user),
                       service: ProfileService = Depends(get_profile_service),
@@ -128,3 +139,6 @@ async def update_profile(profile_id: int,
         if new_avatar_path:
             await media_service.delete_image(key_path=new_avatar_path)
         raise HTTPException(status_code=500, detail="Profile update failed")
+
+
+

@@ -60,7 +60,7 @@ class CelerySetting(CoreConfig):
 
 
 class MeiliSearchSettings(CoreConfig):
-    MEILI_HTTP_ADDR: str
+    MEILI_URL: str
     MEILI_MASTER_KEY: str
 
 
@@ -77,6 +77,15 @@ class S3Settings(CoreConfig):
         return f"https://{self.S3_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
 
+class LLMSettings(CoreConfig):
+    LLM_HOST: str
+    LLM_PORT: int
+
+    @property
+    def llm_url(self):
+        return f"http://{self.LLM_HOST}:{self.LLM_PORT}"
+
+
 class Settings(CoreConfig):
     db: DBSettings = DBSettings()
     email_client: EmailClientSettings = EmailClientSettings()
@@ -85,6 +94,7 @@ class Settings(CoreConfig):
     s3: S3Settings = S3Settings()
     redis: RedisSetting = RedisSetting()
     meilisearch: MeiliSearchSettings = MeiliSearchSettings()
+    llm: LLMSettings = LLMSettings()
 
 
 settings = Settings()
