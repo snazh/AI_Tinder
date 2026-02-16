@@ -59,6 +59,7 @@ async def auth(request: Request,
     if is_new:
         logger.info(f"Welcome email sent to {user.email}")
         send_welcome_email.delay(user.email)
+    await session.commit()
     return {"message": "Logged in successfully", "user": user}
 
 

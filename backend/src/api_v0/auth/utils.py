@@ -19,7 +19,7 @@ class JWTUtil:
 
         payload = data.copy()
         payload.update({
-            "exp": datetime.utcnow() + timedelta(minutes=15),
+            "exp": datetime.utcnow() + timedelta(minutes=30),
             "type": "access"  # <-- вот это поле
         })
         token = jwt.encode(payload, settings.auth.SECRET_KEY, algorithm=settings.auth.ALGORITHM)

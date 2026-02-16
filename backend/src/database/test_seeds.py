@@ -1,12 +1,13 @@
 import asyncio
+import random
+
 from faker import Faker
 from meilisearch_python_sdk import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from src.database.db import async_session_maker
 from src.database.models.user import User, UserRole
-from src.database.models.profile import Profile
-from src.services.meilisearch_service.meilisearch import get_meili_client
+from src.database.models.profile import Profile, Like
 from src.config import settings
 
 fake = Faker()
@@ -53,6 +54,48 @@ async def create_user_profile():
 
         print(f"Successfully processed {len(profiles_data)} users and profiles")
 
+async def create_likes(max_likes_per_profile: int = 10):
+    """
+    Generate random likes for all profiles.
+    """
+    async with async_session_maker() as session:
+        # Get all profile IDs
+        result = await session.execute(select(Profile.id))
+        profile_ids = result.scalars().all()
+        print(f"Total profiles: {len(profile_ids)}")
+
+        likes_data = []
+        for liker_id in profile_ids:
+            # Random number of likes per profile
+            num_likes = random.randint(1, max_likes_per_profile)
+            # Choose unique liked profiles excluding self
+            possible_likes = list(set(profile_ids) - {liker_id})
+            liked_ids = random.sample(possible_likes, min(num_likes, len(possible_likes)))
+
+            for liked_id in liked_ids:
+                likes_data.append({
+                    "liker_id": liker_id,
+                    "liked_id": liked_id,
+                })
+
+        if likes_data:
+            stmt = insert(Like).values(likes_data)
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=["liker_id", "liked_id"]
+            )
+            await session.execute(stmt)
+            await session.commit()
+            print(f"✅ Inserted {len(likes_data)} likes")
+        else:
+            print("No likes generated.")
+async def clear_meili():
+    meili = AsyncClient(
+        settings.meilisearch.MEILI_URL,
+        settings.meilisearch.MEILI_MASTER_KEY,
+    )
+    index = meili.index("profiles")
+    await index.delete_all_documents()
+    print("Profile cleared from meili")
 
 async def add_to_meili():
     meili = AsyncClient(
@@ -106,4 +149,10 @@ async def add_to_meili():
     await meili.aclose()
 
 if __name__ == "__main__":
-    asyncio.run(add_to_meili())
+    async def main():
+
+        await create_user_profile(),
+        await create_likes()
+
+
+    asyncio.run(main())

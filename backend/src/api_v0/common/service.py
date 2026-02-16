@@ -21,7 +21,7 @@ class BaseService[ModelType, SchemaType]:
     async def create(self, item_data: BaseModel, session: AsyncSession) -> SchemaType:
         new_item = self.model(**item_data.model_dump())
         session.add(new_item)
-        await session.commit()
+        await session.flush()
         await session.refresh(new_item)
         return self._to_schema(new_item)
 
