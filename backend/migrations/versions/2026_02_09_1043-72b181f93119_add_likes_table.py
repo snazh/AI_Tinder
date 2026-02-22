@@ -1,4 +1,4 @@
-"""add likes table
+"""Likes table
 
 Revision ID: 72b181f93119
 Revises: c16b4f027942

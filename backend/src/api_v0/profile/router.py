@@ -1,11 +1,8 @@
 import json
 from json import JSONDecodeError
-
 from fastapi import APIRouter, HTTPException, Depends, status, Form, File, UploadFile
 from meilisearch_python_sdk import AsyncClient
-
 from src.api_v0.common.errors import ItemNotFoundError
-
 from src.api_v0.auth.dependencies import get_current_user
 from src.api_v0.profile.dependencies import get_profile_service, get_like_service
 from src.api_v0.profile.schemas import ProfileCreateSchema, ProfileUpdateSchema, LikeCreateSchema
@@ -158,7 +155,8 @@ async def like_profile(profile_id: int,
     profile = await profile_service.get_profile_by(field="user_id", value=user["id"], session=session)
     like_data = LikeCreateSchema(liked_id=profile_id, liker_id=profile.id)
     like = await service.like_profile(like_data=like_data, session=session)
-    logger.info(f"Profile with ID: {profile_id} was liked by profile with ID:{profile.id}", extra={"user_id": user["id"]})
+    logger.info(f"Profile with ID: {profile_id} was liked by profile with ID:{profile.id}",
+                extra={"user_id": user["id"]})
     return {"msg": f"Profile with ID: {profile_id} liked at {like.created_at}"}
 
 
@@ -170,7 +168,7 @@ async def get_likers(profile_id: int,
                      session: AsyncSession = Depends(get_async_session)):
     my_profile = await profile_service.get_profile_by(field="user_id", value=user["id"], session=session)
 
-    #checks if profile exists.
+    # checks if profile exists.
     await profile_service.get_profile_by(field="id", value=profile_id, session=session)
 
     if my_profile.id != profile_id:
@@ -178,5 +176,16 @@ async def get_likers(profile_id: int,
         raise AccessForbiddenError()
 
     likers = await service.find_likers(profile_id=profile_id, session=session)
+
     logger.info(f"Likers for profile with ID:{profile_id}", extra={"user_id": user["id"]})
-    return likers
+    return {"msg":f"Profiles who liked profile with ID:{profile_id}) fetched", "profiles": likers}
+
+
+@router.get("/me/likes", status_code=status.HTTP_200_OK)
+async def get_my_likes(user: dict = Depends(get_current_user),
+                       service: LikeService = Depends(get_like_service),
+                       profile_service: ProfileService = Depends(get_profile_service),
+                       session: AsyncSession = Depends(get_async_session)):
+    my_profile = await profile_service.get_profile_by(field="user_id", value=user["id"], session=session)
+    liked_profiles = await service.get_user_likes(profile_id=my_profile.id, session=session)
+    return liked_profiles

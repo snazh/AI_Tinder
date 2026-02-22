@@ -1,17 +1,32 @@
 import logging
-
-logger = logging.getLogger(__name__)
 from redis.asyncio import Redis
 from src.config import settings
 
+logger = logging.getLogger(__name__)
 
-async def create_redis():
-    redis = Redis(
+_redis: Redis | None = None
+
+
+async def init_redis() -> None:
+    global _redis
+    _redis = Redis(
         host=settings.redis.REDIS_HOST,
         port=settings.redis.REDIS_PORT,
         decode_responses=True,
-        username="default",
     )
-    await redis.ping()
-    logger.info("Profile creation started")
-    return redis
+
+    await _redis.ping()
+    logger.info("Redis connected successfully")
+
+
+async def close_redis() -> None:
+    global _redis
+    if _redis:
+        await _redis.close()
+        _redis = None
+
+
+def get_redis() -> Redis:
+    if _redis is None:
+        raise RuntimeError("Redis not initialized")
+    return _redis

@@ -86,6 +86,12 @@ class LLMSettings(CoreConfig):
         return f"http://{self.LLM_HOST}:{self.LLM_PORT}"
 
 
+class TelegramSettings(CoreConfig):
+    BOT_USERNAME: str
+    BOT_TOKEN: str
+    BACKEND_PUBLIC_URL: str = "http://localhost:8000"
+
+
 class Settings(CoreConfig):
     db: DBSettings = DBSettings()
     email_client: EmailClientSettings = EmailClientSettings()
@@ -95,6 +101,7 @@ class Settings(CoreConfig):
     redis: RedisSetting = RedisSetting()
     meilisearch: MeiliSearchSettings = MeiliSearchSettings()
     llm: LLMSettings = LLMSettings()
+    tg: TelegramSettings = TelegramSettings()
 
 
 settings = Settings()

@@ -3,11 +3,12 @@ name = "backend"
 version = "0.1.0"
 description = ""
 authors = ["Sanzhar <sanxius.kon@gmail.com>"]
-readme = "README.md"
+readme = "../README.md"
 [tool.poetry.scripts]
 start="uvicorn src.main:app --reload"
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12,<3.15"
+aiogram = "^3.25.0"
 fastapi = {extras = ["all"], version = "^0.119.1"}
 alembic = "^1.17.0"
 pydantic-settings = "^2.11.0"

@@ -109,9 +109,10 @@ async def test_get_likers(client, db_session):
     # api request
     resp = await client.get(f"/profile/{liked_profile_id}/likers")
     assert resp.status_code in (200, 201), resp.text
-
+    data = resp.json()
+    resp_profile_ids = [profile["id"] for profile in data["profiles"]]
     result = await db_session.execute(select(Like.liker_id).where(Like.liked_id == liked_profile_id))
     saved_profile_ids = result.scalars().all()
-    print(saved_profile_ids)
 
-    assert saved_profile_ids == profile_ids
+
+    assert saved_profile_ids == resp_profile_ids

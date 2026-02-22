@@ -5,11 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from src.api_v0.auth.router import router as auth_router
 from src.api_v0.profile.router import router as profile_router
+from src.api_v0.telegram.router import router as telegram_router
 from src.api_v0.common.errors import BaseAppException
 from src.config import settings
 from starlette.middleware.sessions import SessionMiddleware
 from src.core.logging_config import setup_logging
-from src.services.redis_service.connection import create_redis
+from src.services.redis_service.connection import init_redis, close_redis
 
 from meilisearch_python_sdk import AsyncClient
 from src.services.meilisearch_service import meilisearch
@@ -18,7 +19,8 @@ from src.services.meilisearch_service import meilisearch
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     setup_logging()
-    app.state.redis = await create_redis()
+
+    await init_redis()
     meilisearch.meili_client = AsyncClient(
         settings.meilisearch.MEILI_URL,
         settings.meilisearch.MEILI_MASTER_KEY,
@@ -27,7 +29,7 @@ async def lifespan(app_instance: FastAPI):
     await index.update_searchable_attributes(["username", "description"])
     await index.update_filterable_attributes(["age", "role"])
     yield
-    await app.state.redis.close()
+    await close_redis()
     await meilisearch.meili_client.aclose()
 
 app = FastAPI(title="KezdesuAI API", lifespan=lifespan)
@@ -51,6 +53,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(profile_router)
+app.include_router(telegram_router)
 
 
 @app.exception_handler(BaseAppException)

@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +22,6 @@ class ProfileService(BaseService[Profile, ProfileModelSchema]):
         return profile
 
     async def get_profile_by(self, field: str, value, session: AsyncSession) -> ProfileModelSchema:
-        profile = None
         if field == "id":
             profile = await super().get_by_id(item_id=value, session=session)
         else:
@@ -39,7 +40,7 @@ class LikeService(BaseService[Like, LikeModelSchema]):
         like = await super().create(item_data=like_data, session=session)
         return like
 
-    async def find_likers(self, profile_id: int, session: AsyncSession):
+    async def find_likers(self, profile_id: int, session: AsyncSession) -> List[ProfileModelSchema]:
         stmt = (
             select(Profile)
             .join(self.model, Profile.id == self.model.liker_id)
@@ -47,7 +48,22 @@ class LikeService(BaseService[Like, LikeModelSchema]):
         )
 
         result = await session.execute(stmt)
-        return result.scalars().all()
+        likers = []
+        for profile in result.scalars().all():
+            likers.append(ProfileModelSchema.model_validate(profile))
+        return likers
+
+    async def get_user_likes(self, profile_id: int, session: AsyncSession) -> List[ProfileModelSchema]:
+        stmt = (
+            select(Profile)
+            .join(self.model, Profile.id == self.model.liker_id)
+            .where(self.model.liker_id == profile_id)
+        )
+        result = await session.execute(stmt)
+        likes = []
+        for profile in result.scalars().all():
+            likes.append(ProfileModelSchema.model_validate(profile))
+        return likes
 
     async def find_mutual_like(self):
         pass
