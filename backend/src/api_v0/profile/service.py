@@ -4,16 +4,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api_v0.common.errors import ItemNotFoundError
-from src.api_v0.common.service import BaseService
-from src.config import settings
+from src.api_v0.common.service import BaseRepo
 from src.api_v0.profile.schemas import ProfileCreateSchema, ProfileModelSchema, LikeCreateSchema, LikeModelSchema
-from src.database.models import Profile, Like, User
+from src.database.models import Profile, Like
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-class ProfileService(BaseService[Profile, ProfileModelSchema]):
+class ProfileService(BaseRepo[Profile, ProfileModelSchema]):
     def __init__(self):
         super().__init__(Profile, ProfileModelSchema)
 
@@ -32,7 +31,7 @@ class ProfileService(BaseService[Profile, ProfileModelSchema]):
         return profile
 
 
-class LikeService(BaseService[Like, LikeModelSchema]):
+class LikeService(BaseRepo[Like, LikeModelSchema]):
     def __init__(self):
         super().__init__(Like, LikeModelSchema)
 

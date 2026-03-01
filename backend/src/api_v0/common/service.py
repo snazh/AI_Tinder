@@ -9,7 +9,7 @@ from src.api_v0.common.errors import ItemNotFoundError, ItemAlreadyExistsError
 from src.database.models.user import UserRole
 
 
-class BaseService[ModelType, SchemaType]:
+class BaseRepo[ModelType, SchemaType]:
 
     def __init__(self, model: ModelType, schema: SchemaType):
         self.model = model
@@ -36,7 +36,6 @@ class BaseService[ModelType, SchemaType]:
         return self._to_schema(item) if item else None
 
     async def get_all(self, session: AsyncSession) -> List[SchemaType]:
-
         stmt = select(self.model)
         result = await session.execute(stmt)
         items = result.scalars().all()
@@ -49,17 +48,18 @@ class BaseService[ModelType, SchemaType]:
         return [self._to_schema(item) for item in items]
 
     async def update(self, item_id: int, item_update_data: BaseModel, session: AsyncSession) -> bool:
+        values = item_update_data.model_dump(exclude_unset=True)
+        if not values:
+            return True
         stmt = (
             update(self.model)
             .where(self.model.id == item_id)
-            .values(**item_update_data.model_dump)
+            .values(**values)
             .execution_options(synchronize_session="fetch")
         )
         result = await session.execute(stmt)
-        await session.commit()
-        if result.rowcount == 0:
-            raise ItemNotFoundError(item="", attr="id", value=item_id)
-        return True
+        await session.flush()
+        return result.rowcount != 0
 
     async def delete(self, session: AsyncSession, item_id: int) -> bool:
         stmt = (
@@ -68,10 +68,8 @@ class BaseService[ModelType, SchemaType]:
             .execution_options(synchronize_session="fetch")
         )
         result = await session.execute(stmt)
-        await session.commit()
-        if result.rowcount == 0:
-            return False
-        return True
+        await session.flush()
+        return result.rowcount != 0
 
     async def get_all_with_options(self, session: AsyncSession, *options) -> List[SchemaType]:
         stmt = select(self.model).options(*options)

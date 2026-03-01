@@ -25,15 +25,16 @@ async def start_handler(message: Message):
     chat_id = message.chat.id
     username = message.from_user.username if message.from_user else None
 
-    url = settings.tg.BACKEND_PUBLIC_URL.rstrip("/") + "/api_v0/telegram/verify"
+    url = settings.tg.BACKEND_PUBLIC_URL.rstrip("/") + "/telegram/verify"
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         r = await client.post(url, json={"token": token, "chat_id": chat_id, "username": username})
 
-    if r.status_code == 200 and r.json().get("ok") is True:
+    if r.status_code == 200:
         await message.answer("✅ Telegram подтверждён. Возвращайся в приложение.")
     else:
-        await message.answer("❌ Токен неверный/истёк или уже использован.")
+
+        await message.answer(f"❌ Токен неверный/истёк или уже использован.")
 
 
 async def main():
